@@ -1,0 +1,57 @@
+pipeline {
+    agent any
+    
+    environment {
+        scannerHome = tool name: 'SonarQubeScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+         dockerImage = 'Sample-Application' // Replace with your Docker image name
+    }
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                 git branch: 'main', credentialsId: '8ef23156-5760-493f-b642-e77f2ece00d9', url: 'https://github.com/kavinraj2k/FlaskUsingpipeline.git'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                                        sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=my_project_key \
+                        -Dsonar.sources=. \
+                        -Dsonar.host.url=http://localhost:9000
+                    """
+                }
+            }
+        }
+        
+                stage('Build Docker Image') {
+            steps {
+                script {
+                    // Build Docker image
+                    docker.build("${dockerImage}:${BUILD_NUMBER}")
+                }
+            }
+        }
+
+        stage('Stop and Remove Old Container') {
+            steps {
+                script {
+                    // Stop and remove old container if running
+                    sh 'docker ps -aq --filter "ancestor=${dockerImage}" | xargs docker stop || true'
+                    sh 'docker ps -aq --filter "ancestor=${dockerImage}" | xargs docker rm || true'
+                }
+            }
+        }
+
+        stage('Start New Container') {
+            steps {
+                script {
+                    // Start new container from the newly built image with --rm
+                    sh "docker run -d --rm --name my-container -p 8080:8080 ${dockerImage}:${BUILD_NUMBER}"
+                }
+            }
+        }
+    }
+}
