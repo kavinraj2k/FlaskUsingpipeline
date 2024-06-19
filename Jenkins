@@ -3,54 +3,101 @@ pipeline {
     
     environment {
         scannerHome = tool name: 'SonarQubeScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
-         dockerImage = 'Sample-Application' // Replace with your Docker image name
+        dockerImage = 'sample-application'  // Name of your Docker image
     }
 
     stages {
-        stage('Git Checkout') {
+        stage('Hello') {
             steps {
-                 git branch: 'main', credentialsId: '8ef23156-5760-493f-b642-e77f2ece00d9', url: 'https://github.com/kavinraj2k/FlaskUsingpipeline.git'
+                // Checkout the code from GitHub
+                git branch: 'main', credentialsId: '6bbab09d-4b2c-4fe5-a02e-f1e027e1b94e', url: 'https://github.com/kavinraj2k/FlaskUsingpipeline.git'
             }
         }
-
+        
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') {
-                                        sh """
-                        ${scannerHome}/bin/sonar-scanner \
-                        -Dsonar.projectKey=my_project_key \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=http://localhost:9000
-                    """
+                // Run SonarQube analysis
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                    withSonarQubeEnv('SonarQube') {
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=my_project_key \
+                            -Dsonar.sources=. \
+                            -Dsonar.host.url=http://localhost:9000
+                        """
+                    }
+                }
+            }
+            post {
+                failure {
+                    // Send email notification on SonarQube analysis failure
+                    emailext subject: "SonarQube Analysis Failed: Job ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                             body: "SonarQube analysis failed for ${env.JOB_NAME} [${env.BUILD_NUMBER}]. Please investigate.",
+                             to: 'rskavinraj12345@gmail.com'
+                }
+            }
+        }
+        stage('Stop and Remove Old Containers') {
+            steps {
+                script {
+                    sh 'docker stop sample-flask-application'
                 }
             }
         }
         
-                stage('Build Docker Image') {
+        stage('Remove Old Docker Image') {
             steps {
                 script {
-                    // Build Docker image
-                    docker.build("${dockerImage}:${BUILD_NUMBER}")
+                    // Remove old Docker image forcefully
+                    sh 'docker rmi -f $(docker images -q sample-application) || true'
                 }
             }
         }
-
-        stage('Stop and Remove Old Container') {
+        
+        stage('Build Docker Image') {
             steps {
+                // Build Docker image
                 script {
-                    // Stop and remove old container if running
-                    sh 'docker ps -aq --filter "ancestor=${dockerImage}" | xargs docker stop || true'
-                    sh 'docker ps -aq --filter "ancestor=${dockerImage}" | xargs docker rm || true'
+                       sh " docker build -t ${dockerImage}:${env.BUILD_NUMBER} ."
                 }
             }
         }
-
-        stage('Start New Container') {
+        
+        stage('Security Scan with Trivy') {
             steps {
                 script {
-                    // Start new container from the newly built image with --rm
-                    sh "docker run -d --rm --name my-container -p 8080:8080 ${dockerImage}:${BUILD_NUMBER}"
+                    // Run Trivy security scan on the Docker image
+                    def dockerImageName = "${dockerImage}:${env.BUILD_NUMBER}"
+                    sh "trivy ${dockerImageName}"
                 }
+            }
+            post {
+                success {
+                    // Send email notification on successful Trivy scan
+                    emailext subject: "Trivy Security Scan Succeeded: Job ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                             body: "Trivy security scan completed successfully for ${env.JOB_NAME} [${env.BUILD_NUMBER}]. No critical vulnerabilities found.",
+                             to: 'rskavinraj12345@gmail.com'
+                }
+            }
+        }
+        
+        stage('Deploy Docker Container') {
+            steps {
+                // Deploy Docker container
+                script {
+                    def dockerImageName = "${dockerImage}:${env.BUILD_NUMBER}"
+                    sh "docker run -d --rm --name sample-flask-application -p 8000:8000 ${dockerImageName}"
+                }
+            }
+        }
+    }
+    
+    // Global post section for common post-build actions
+    post {
+        always {
+            // Clean up actions, notifications, etc.
+            script {
+                echo "Pipeline finished"
             }
         }
     }
