@@ -42,6 +42,9 @@ requests==2.25.1
 ruamel.yaml==0.16.6
 ruamel.yaml.clib==0.1.2
 secure-smtplib==0.1.1
+setools==4.4.1
+six==1.15.0
+support-info==1.0
 systemd-python==235
 urllib3==1.25.10
 wcwidth==0.2.5
