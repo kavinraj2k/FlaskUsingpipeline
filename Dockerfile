@@ -4,9 +4,9 @@ FROM python:3.9
 # Set the working directory inside the container
 WORKDIR /app
 
-# Install system dependencies including pkg-config and libsystemd-dev
+# Install system dependencies including pkg-config, libsystemd-dev, and dbus-1 development packages
 RUN apt-get update \
-    && apt-get install -y pkg-config libsystemd-dev \
+    && apt-get install -y pkg-config libsystemd-dev libdbus-1-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the requirements file into the working directory
