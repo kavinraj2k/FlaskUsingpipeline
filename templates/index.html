@@ -8,28 +8,28 @@
 <body>
     <h1>Send Email</h1>
     <form id="emailForm">
-        <label for="to">To:</label>
-        <input type="email" id="to" name="to" required><br>
+        <label for="to_email">To:</label>
+        <input type="email" id="to_email" name="to_email" required><br>
         <label for="subject">Subject:</label>
         <input type="text" id="subject" name="subject" required><br>
-        <label for="message">Message:</label>
-        <textarea id="message" name="message" required></textarea><br>
+        <label for="body">Message:</label>
+        <textarea id="body" name="body" required></textarea><br>
         <button type="submit">Send</button>
     </form>
 
     <script>
         document.getElementById('emailForm').addEventListener('submit', function(event) {
             event.preventDefault();
-            const to = document.getElementById('to').value;
+            const toEmail = document.getElementById('to_email').value;
             const subject = document.getElementById('subject').value;
-            const message = document.getElementById('message').value;
+            const body = document.getElementById('body').value;
 
             fetch('/send-email', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ to, subject, message })
+                body: JSON.stringify({ to_email: toEmail, subject: subject, body: body })
             })
             .then(response => response.json())
             .then(data => {
@@ -43,4 +43,3 @@
     </script>
 </body>
 </html>
-
