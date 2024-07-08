@@ -4,9 +4,9 @@ FROM python:3.9
 # Set the working directory inside the container
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including pkg-config and libsystemd-dev
 RUN apt-get update \
-    && apt-get install -y pkg-config \
+    && apt-get install -y pkg-config libsystemd-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the requirements file into the working directory
