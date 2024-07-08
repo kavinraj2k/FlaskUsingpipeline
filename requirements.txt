@@ -1,7 +1,4 @@
 attrs==20.3.0
-aws-cfn-bootstrap
-awscli==2.15.30
-awscrt==0.19.19
 Babel==2.9.1
 blinker==1.8.2
 cffi==1.14.5
