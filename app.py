@@ -9,7 +9,10 @@ app = Flask(__name__, template_folder='templates')
 requests_total = Counter('requests_total', 'Total number of requests received')
 
 # Email API configuration
-EMAIL_API_URL = os.getenv('EMAIL_API_URL', 'http://email-api:5000/send_email')
+# EMAIL_API_URL = os.getenv('EMAIL_API_URL', 'http://email-api:5000/send_email')
+
+EMAIL_API_URL = os.getenv('EMAIL_API_URL', 'http://172.18.0.2:5000/send_email')
+
 
 @app.route('/')
 def index():
