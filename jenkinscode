@@ -1,0 +1,143 @@
+pipeline {
+    agent any
+
+    environment {
+        scannerHome = tool name: 'SonarQubeScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+        dockerImage = "sample-flask-application"  // Define the docker image name
+    }
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', credentialsId: 'Github', url: 'https://github.com/kavinraj2k/FlaskUsingpipeline.git'
+            }
+        }
+        
+        stage('SonarQube Analysis') {
+            steps {
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                    withSonarQubeEnv('SonarQubeScanner') {
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=sample_project \
+                            -Dsonar.sources=. \
+                            -Dsonar.host.url=http://localhost:9000
+                        """
+                    }
+                }
+            }
+            post {
+                failure {
+                    emailext subject: "SonarQube Analysis Failed: Job ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                             body: "SonarQube analysis failed for ${env.JOB_NAME} [${env.BUILD_NUMBER}]. Please investigate.",
+                             to: 'rskavinraj12345@gmail.com'
+                }
+            }
+        }
+        
+        stage('Deploy to Webserver') {
+            steps {
+                script {
+                    sshagent(['Ec2-User']) {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ec2-user@172.31.42.142 "sudo rm -rf /home/ec2-user/deployment/* && mkdir -p /home/ec2-user/deployment"
+                            scp -r `find . -path ./.git -prune -o -print` ec2-user@172.31.42.142:/home/ec2-user/deployment/
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Stop and Remove Old Containers') {
+            steps {
+                script {
+                    sshagent(['Ec2-User']) {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ec2-user@172.31.42.142 '
+                                if [ \$(docker ps -q -f name=sample-flask-application) ]; then
+                                    docker stop sample-flask-application
+                                fi
+                                docker rm -f sample-flask-application || true
+                            '
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Remove Old Docker Image') {
+            steps {
+                script {
+                    sshagent(['Ec2-User']) {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ec2-user@172.31.42.142 '
+                                images=\$(docker images -q ${dockerImage} || true)
+                                if [ ! -z "\$images" ]; then
+                                    docker rmi -f \$images || true
+                                fi
+                            '
+                        """
+                    }
+                }
+            }
+        }
+        
+stage('Build Docker Image') {
+    steps {
+        script {
+            sshagent(['Ec2-User']) {
+                sh '''
+                    ssh -o StrictHostKeyChecking=no ec2-user@172.31.42.142 '
+                        DOCKER_IMAGE=${dockerImage}
+                        BUILD_NUMBER=${env.BUILD_NUMBER}
+                        echo "DOCKER_IMAGE=\$DOCKER_IMAGE"
+                        echo "BUILD_NUMBER=\$BUILD_NUMBER"
+                        cd /home/ec2-user/deployment
+                        docker build -t \$DOCKER_IMAGE:\$BUILD_NUMBER .
+                    '
+                '''
+            }
+        }
+    }
+}
+
+
+        
+        stage('Security Scan with Trivy') {
+            steps {
+                script {
+                    sshagent(['Ec2-User']) {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ec2-user@172.31.42.142 '
+                                trivy --format=json --output=/tmp/trivy-report.json ${dockerImage}:${env.BUILD_NUMBER}
+                                trivy --format=table ${dockerImage}:${env.BUILD_NUMBER}
+                            '
+                        """
+                    }
+                    
+                    def trivyReportJson = sh(script: "ssh ec2-user@172.31.42.142 'cat /tmp/trivy-report.json'", returnStdout: true).trim()
+                    def trivyReportTable = sh(script: "ssh ec2-user@172.31.42.142 'trivy --format=table ${dockerImage}:${env.BUILD_NUMBER}'", returnStdout: true).trim()
+
+                    emailext subject: "Trivy Security Scan Report: Job ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                             body: "Trivy security scan completed for ${env.JOB_NAME} [${env.BUILD_NUMBER}]. No critical vulnerabilities found.\n\nJSON Report:\n${trivyReportJson}\n\nTable Report:\n${trivyReportTable}",
+                             to: 'rskavinraj12345@gmail.com',
+                             attachmentsPattern: '/tmp/trivy-report.json'
+                }
+            }
+        }
+        
+        stage('Deploy Docker Container') {
+            steps {
+                script {
+                    sshagent(['Ec2-User']) {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ec2-user@172.31.42.142 '
+                                docker run -d --name sample-flask-application -p 8000:8000 ${dockerImage}:${env.BUILD_NUMBER}
+                            '
+                        """
+                    }
+                }
+            }
+        }
+    }
+}
