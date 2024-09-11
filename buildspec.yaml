@@ -1,0 +1,10 @@
+[
+  {
+    "name": "flaskapp",
+    "imageUri": "713881800587.dkr.ecr.ap-northeast-1.amazonaws.com/flaskapp"
+  },
+  {
+    "name": "email",
+    "imageUri": "713881800587.dkr.ecr.ap-northeast-1.amazonaws.com/mailapi"
+  }
+]
