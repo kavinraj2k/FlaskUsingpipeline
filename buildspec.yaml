@@ -4,7 +4,7 @@
     "imageUri": "713881800587.dkr.ecr.ap-northeast-1.amazonaws.com/flaskapp"
   },
   {
-    "name": "email",
+    "name": "email-api",
     "imageUri": "713881800587.dkr.ecr.ap-northeast-1.amazonaws.com/mailapi"
   }
 ]
