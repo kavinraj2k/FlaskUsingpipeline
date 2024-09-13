@@ -26,13 +26,10 @@ phases:
       - docker push $REPO_URI:latest
       - echo "Creating imagedefinitions.json file..."
       - echo "[{\"name\":\"samples\",\"imageUri\":\"$REPO_URI:$IMAGE_TAG\"}]" > imagedefinitions.json
-
-  cleanup:
-    commands:
+      
+      # Cleanup untagged images
       - echo "Cleaning up old images in ECR..."
-      # List untagged images
       - old_images=$(aws ecr list-images --repository-name flaskapp --filter "tagStatus=UNTAGGED" --query 'imageIds[*]' --output json)
-      # Check if any untagged images exist and delete them
       - if [ "$old_images" != "[]" ]; then
           aws ecr batch-delete-image --repository-name flaskapp --image-ids "$old_images";
         fi
