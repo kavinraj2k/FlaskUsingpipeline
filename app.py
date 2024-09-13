@@ -22,6 +22,10 @@ def index():
 def app_route():
     return render_template('app.html')
 
+@app.route('/kavin')
+def kavins():
+    return render_template('kavin.html')
+
 @app.route('/metrics')
 def metrics():
     return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
