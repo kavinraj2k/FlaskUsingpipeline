@@ -46,7 +46,7 @@ def kavins():
         </head>
         <body>
             <div class="message">
-                Hello, this is a small display message!
+                Hello, this is a small display message from ECS cluster!
             </div>
         </body>
     </html>
