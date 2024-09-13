@@ -24,7 +24,10 @@ phases:
       - echo "Pushing the Docker image to ECR..."
       - docker push $REPO_URI:$IMAGE_TAG
       - docker push $REPO_URI:latest
+      - echo "Creating imagedefinitions.json file..."
+      - echo "[{\"name\":\"flaskapp\",\"imageUri\":\"$REPO_URI:$IMAGE_TAG\"}]" > imagedefinitions.json
 
 artifacts:
-  files: '**/*'
+  files:
+    - imagedefinitions.json
   discard-paths: yes
