@@ -1,4 +1,4 @@
-from flask import Flask, Response, render_template, request, jsonify
+from flask import Flask, Response, render_template, request, jsonify, render_template_string
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 import requests
 import os
@@ -24,7 +24,33 @@ def app_route():
 
 @app.route('/kavin')
 def kavins():
-    return render_template('kavin.html')
+        return render_template_string('''
+    <html>
+        <head>
+            <title>Display Message</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    text-align: center;
+                    margin-top: 100px;
+                }
+                .message {
+                    font-size: 20px;
+                    color: #333;
+                    padding: 10px;
+                    border: 1px solid #ccc;
+                    display: inline-block;
+                    background-color: #f9f9f9;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="message">
+                Hello, this is a small display message!
+            </div>
+        </body>
+    </html>
+    ''')
 
 @app.route('/metrics')
 def metrics():
