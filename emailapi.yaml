@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: email-api
-        image: kavinraj2k1/emailapi:latest  # Replace with your email API's Docker image (e.g., myrepo/myemailapi:latest)
+        image: 713881800587.dkr.ecr.ap-northeast-1.amazonaws.com/mailapi:latest 
         ports:
         - containerPort: 5000
 ---
@@ -23,7 +23,7 @@ kind: Service
 metadata:
   name: email-api
 spec:
-  type: ClusterIP  # This keeps the email API internal to the cluster
+  type: ClusterIP  
   selector:
     app: email-api
   ports:

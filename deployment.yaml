@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: flask-app
-        image: kavinraj2k1/pipelineexample # Replace with your app's Docker image (e.g., myrepo/myflaskapp:latest)
+        image: 713881800587.dkr.ecr.ap-northeast-1.amazonaws.com/flaskapp:latest
         ports:
         - containerPort: 8000
 ---
