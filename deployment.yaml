@@ -17,6 +17,8 @@ spec:
         image: 713881800587.dkr.ecr.ap-northeast-1.amazonaws.com/flaskapp
         ports:
         - containerPort: 8000
+      imagePullSecrets:
+        - name: ecr-registry-secret  
 ---
 apiVersion: v1
 kind: Service
