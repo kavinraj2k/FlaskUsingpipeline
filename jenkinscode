@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         scannerHome = tool name: 'SonarQubeScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
-        dockerImage = "sample-flask-application"  // Define the docker image name
+        dockerImage = "sample-flask-application"  
     }
 
     stages {
