@@ -5,9 +5,10 @@ import os
 
 app = Flask(__name__, template_folder='templates')
 
-
+# Prometheus metrics
 requests_total = Counter('requests_total', 'Total number of requests received')
 
+# Email API configuration
 # EMAIL_API_URL = os.getenv('EMAIL_API_URL', 'http://email-api:5000/send_email')
 
 EMAIL_API_URL = os.getenv('EMAIL_API_URL', 'http://email-api:5000/send_email')
@@ -60,6 +61,7 @@ def send_email():
     data = request.json
     app.logger.info(f'Received data: {data}')
 
+    # Ensure required fields are present
     if 'to_email' not in data or 'subject' not in data or 'body' not in data:
         return jsonify({"error": "Missing required fields"}), 400
 

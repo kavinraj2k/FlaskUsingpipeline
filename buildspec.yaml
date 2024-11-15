@@ -26,7 +26,8 @@ phases:
       - docker push $REPO_URI:latest
       - echo "Creating imagedefinitions.json file..."
       - echo "[{\"name\":\"samples\",\"imageUri\":\"$REPO_URI:$IMAGE_TAG\"}]" > imagedefinitions.json
-
+      
+      # Cleanup untagged images
       - echo "Cleaning up old images in ECR..."
       - old_images=$(aws ecr list-images --repository-name flaskapp --filter "tagStatus=UNTAGGED" --query 'imageIds[*]' --output json)
       - if [ "$old_images" != "[]" ]; then
