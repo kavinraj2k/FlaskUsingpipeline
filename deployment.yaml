@@ -25,11 +25,10 @@ kind: Service
 metadata:
   name: flask-app-service
 spec:
-  type: NodePort  # Exposes the Flask app externally
+  type: LoadBalancer
   selector:
     app: flask-app
   ports:
     - port: 8000
       targetPort: 8000
-      nodePort: 30000  # Port to expose the Flask app on
 
